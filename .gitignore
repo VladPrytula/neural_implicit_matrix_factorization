@@ -1,0 +1,7 @@
+.vscode/*
+
+# Local History for Visual Studio Code
+.history/
+__pycache__/*
+checkpoints/*
+runs/*
