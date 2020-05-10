@@ -1,6 +1,10 @@
 import math
 import pandas as pd
+import logging
 
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 class RecoMetrics():
     def __init__(self,
@@ -12,6 +16,8 @@ class RecoMetrics():
 
     def set_interactions(self, test_users, test_items, test_scores, 
                             negative_interactions_users, negative_items, negative_scores):
+        logger.info("n users {}".format(len(test_users)))
+        logger.info("n item {}".format(len(test_items)))
         positive_interactions_df = pd.DataFrame(
             {
                 'users': test_users,
@@ -19,6 +25,8 @@ class RecoMetrics():
                 'test_scores': test_scores
             }
         )
+
+        print(positive_interactions_df)
 
         # and together with negative interactions
         eval_df = pd.DataFrame(
@@ -28,7 +36,9 @@ class RecoMetrics():
                 'scores': negative_scores + test_scores
             }
         )
+        print(eval_df)
 
+        logger.info("pd eval shpae {}".format(eval_df.shape))
         # we need this dumb join in order to be able to lately compute top hits
         eval_df = pd.merge(eval_df, positive_interactions_df,
                            on=['users'], how='left')
@@ -42,6 +52,10 @@ class RecoMetrics():
         top_k_df = self._ranked_users_scores_df[self._ranked_users_scores_df['rank'] <= self._top_k]
         test_in_top_k = top_k_df[top_k_df['test_items'] == top_k_df['items']]
         # TODO: the return statement shoudl be re-written to exlude multiple nuniqe calculations
+        
+        logger.info(len(test_in_top_k))
+        logger.info(self._ranked_users_scores_df['users'].nunique())
+
         return len(test_in_top_k) * 1.0 / self._ranked_users_scores_df['users'].nunique()
 
     def cal_ndcg(self):

@@ -7,6 +7,7 @@ import logging
 import datetime
 from eval_metrics import RecoMetrics
 from statistics import mean
+import numpy as np
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -120,10 +121,12 @@ class BaseDeepRecommender:
                 hit_ratio = self._evaluator.cal_hit_ratio()
                 logger.info("eval batch value HR is {}".format(hit_ratio))
                 epoch_hit_ratio.append(hit_ratio)
-            hit_ratio_avg = mean(epoch_hit_ratio)
+                logger.info(epoch_hit_ratio)
+            hit_ratio_avg =np.array(epoch_hit_ratio).mean()
+            logger.info(hit_ratio_avg)
         self._writer.add_scalar("performance/HR", hit_ratio_avg, epoch_num)
         self._writer.flush()
-        logger.info("[Evluating Epoch {}] HR = {:.4f}".format(epoch_num, hit_ratio))
+        logger.info("[Evluating Epoch {}] HR = {:.4f}".format(epoch_num, hit_ratio_avg))
 
         return hit_ratio
 
@@ -135,10 +138,10 @@ class BaseDeepRecommender:
     #     with torch.no_grad():
     #         # TODO: this is ridiculous piece of shit
     #         test_users, test_items, negative_interactions_users, negative_items = (
-    #             eval_data[0][:10000],
-    #             eval_data[1][:10000],
-    #             eval_data[2][:10000],
-    #             eval_data[3][:10000],
+    #             eval_data[0],
+    #             eval_data[1],
+    #             eval_data[2],
+    #             eval_data[3],
     #         )
     #         # TODO: I have to do normal batch loader.
     #         if self._config["use_cuda"]:

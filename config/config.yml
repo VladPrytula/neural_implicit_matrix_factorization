@@ -1,7 +1,7 @@
 gmf:
     alias: gmf_imf
     num_epochs: 10
-    batch_size: 512
+    batch_size: 1024
     optimizer: adam
     adam_lr: 1e-3
     latent_dim: 8
