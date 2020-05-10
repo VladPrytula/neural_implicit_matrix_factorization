@@ -1,7 +1,7 @@
 gmf:
     alias: gmf_imf
     num_epochs: 10
-    batch_size: 1024
+    batch_size: 512
     optimizer: adam
     adam_lr: 1e-3
     latent_dim: 8
@@ -29,7 +29,7 @@ mlp:
 neumf:
     alias: neural_imf
     num_epochs: 10
-    batch_size: 1024
+    batch_size: 512
     optimizer: adam
     adam_lr: 1e-3
     latent_dim_mf: 8
