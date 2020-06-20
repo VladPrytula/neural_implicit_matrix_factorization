@@ -11,7 +11,7 @@ import numpy as np
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 
 class BaseDeepRecommender:
@@ -37,7 +37,7 @@ class BaseDeepRecommender:
         assert hasattr(
             self, "model"), "We need some model to train, please load/define"
         if self._config["use_cuda"] and torch.cuda.is_available():
-            logger.debug("moving users, items, ratings to cuda")
+        # logger.debug("moving users, items, ratings to cuda")
             users, items, ratings = (
                 users.cuda(non_blocking=True),
                 items.cuda(non_blocking=True),
@@ -100,7 +100,6 @@ class BaseDeepRecommender:
                 # negative interactions {(user_id, negatiev_item_id)} and compute a score
                 positive_interactions_users, positive_interactions_items, negative_interactions_users, negative_interactions_items = [], [], [], []
                 for idx, user in enumerate(test_users):
-                    print(idx)
                     positive_interactions_users.append(user)
                     positive_interactions_items.append(test_items[idx])
                     for i in range(len(negative_samples[idx])):
@@ -108,16 +107,20 @@ class BaseDeepRecommender:
                         negative_interactions_items.append(
                             negative_samples[idx][i])
 
+                logger.debug('active config is {}'.format(self._config["use_cuda"]) )
                 # TODO: I have to do normal batch loader.
                 if self._config["use_cuda"]:
-                    positive_interactions_users = positive_interactions_users.cuda(
+                    positive_interactions_users = torch.LongTensor(positive_interactions_users).cuda(
                         non_blocking=True)
-                    positive_interactions_items = positive_interactions_items.cuda(
+                    logger.debug(positive_interactions_users)
+                    logger.debug(type(positive_interactions_users))
+                    logger.debug(positive_interactions_users.shape)
+                    positive_interactions_items = torch.LongTensor(positive_interactions_items).cuda(
                         non_blocking=True)
-                    negative_interactions_users = negative_interactions_users.cuda(
+                    negative_interactions_users = torch.LongTensor(negative_interactions_users).cuda(
                         non_blocking=True
                     )
-                    negative_interactions_items = negative_interactions_items.cuda(
+                    negative_interactions_items = torch.LongTensor(negative_interactions_items).cuda(
                         non_blocking=True)
                     self.model.cuda()
                 elif not self._config["use_cuda"]:
