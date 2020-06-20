@@ -13,7 +13,7 @@ import logging
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 
 class EvaluationDataset(Dataset):
@@ -57,7 +57,7 @@ class EvaluationDatasetV2(Dataset):
             self._positive_interactions_users))
 
         # persist dataframe
-        self._test_ratings.to_pickle("misc/_test_ratings.pkl")
+        #self._test_ratings.to_pickle("misc/_test_ratings.pkl")
 
     def __getitem__(self, index):
         row = self._test_ratings.iloc[index]
@@ -257,21 +257,21 @@ class SampleGenerator:
         logger.info("preparing evaluation data")
         # TODO: this shoudl be unified in names:
         logger.info(
-            "preparing evaluation data via dataloader, perhaps it shoudl be written to disk once and for all"
+            "preparing evaluation data via dataloader v2, perhaps it shoudl be written to disk once and for all"
         )
         test_ratings = pd.merge(self.test_ratings,
                                 self.negatives[["userId", "negative_samples"]],
                                 on="userId")
-        logger.info(test_ratings.head())
-        positive_interactions_users, test_items, negative_interactions_users, negative_items = [], [], [], []
-        logger.info("check if i have correct positive inter users {}".format(
-            positive_interactions_users))
+        # logger.info(test_ratings.head())
+        # positive_interactions_users, test_items, negative_interactions_users, negative_items = [], [], [], []
+        # logger.info("check if i have correct positive inter users {}".format(
+        #     positive_interactions_users))
 
         evaluation_dataset = EvaluationDatasetV2(test_ratings)
 
         return DataLoader(evaluation_dataset,
-                          batch_size=len(evaluation_dataset),
-                          shuffle=False)
+                          batch_size=batch_size,
+                          shuffle=True, num_workers=4)
 
     def evaluation_data_data_loader(self, batch_size):
         logger.info("preparing evaluation data")

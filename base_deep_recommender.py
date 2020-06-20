@@ -18,7 +18,7 @@ class BaseDeepRecommender:
     def __init__(self, config: DefaultDict):
         logger.info("Base Deep Recommender got the config {}".format(config))
         self._config = config
-        self._evaluator = RecoMetrics(top_k=30)
+        self._evaluator = RecoMetrics()
         # self.model = None
         self._writer = SummaryWriter(
             log_dir="runs/{}".format(
@@ -147,7 +147,8 @@ class BaseDeepRecommender:
                 logger.info("eval batch value HR is {}".format(hit_ratio))
                 epoch_hit_ratio.append(hit_ratio)
                 logger.info(epoch_hit_ratio)
-            hit_ratio_avg = np.array(epoch_hit_ratio).mean()
+            # hit_ratio_avg = np.array(epoch_hit_ratio).mean()
+            hit_ratio_avg = np.mean(np.array(epoch_hit_ratio))
             logger.info(hit_ratio_avg)
         self._writer.add_scalar("performance/HR", hit_ratio_avg, epoch_num)
         self._writer.flush()

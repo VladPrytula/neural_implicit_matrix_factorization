@@ -106,7 +106,8 @@ if __name__ == "__main__":
     gmf_config = c_list["gmf"]
     mlp_config = c_list["mlp"]
     neu_mf_conifg = c_list["neumf"]
-    current_config = gmf_config  # neu_mf_conifg  # mlp_config  # neu_mf_conifg
+    # gmf_config  # neu_mf_conifg  # mlp_config  # neu_mf_conifg
+    current_config = mlp_config
     logger.debug("curretn config is {}".format(current_config))
 
     ml1m_dir = "/data/ml-1m/ratings.dat"
@@ -118,7 +119,7 @@ if __name__ == "__main__":
 
     # prepare data for training
     sample_generator = SampleGenerator(ratings=data)
-    # evaluation_data = sample_generator.evaluation_data
+    evaluation_data = sample_generator.evaluation_data
 
     logger.info("eval data is ready")
     # print(len(evaluation_data))
@@ -139,15 +140,18 @@ if __name__ == "__main__":
     #     config=current_config, num_users=num_users, num_items=num_items
     # )
 
-    # deep_recommender = MLPDeepRecommender(
-    #     config=current_config, num_users=num_users, num_items=num_items)
-    deep_recommender = GIMFDeepRecommender(config=current_config,
-                                           num_users=num_users,
-                                           num_items=num_items)
+    deep_recommender = MLPDeepRecommender(
+        config=current_config, num_users=num_users, num_items=num_items)
+    # deep_recommender = GIMFDeepRecommender(config=current_config,
+    #                                        num_users=num_users,
+    #                                        num_items=num_items)
     dummy_users = torch.tensor([1, 2, 3]).cuda()
     dummy_items = torch.tensor([1, 2, 3]).cuda()
     deep_recommender._writer.add_graph(deep_recommender.model,
                                        (dummy_users, dummy_items))
+
+    eval_data_loader_v2 = sample_generator.evaluation_data_loader_v2(
+        batch_size=current_config["batch_size"])
     # training
     # for epoch in range(gmf_config['num_epochs']):
     #     logger.info("Epoch {}".format(epoch))
@@ -161,9 +165,6 @@ if __name__ == "__main__":
         logger.info("Epoch {}".format(epoch))
         # train_data = sample_generator._prepare_epoch(
         #     current_config["num_negatives"], current_config["batch_size"])
-
-        eval_data_loader_v2 = sample_generator.evaluation_data_loader_v2(
-            batch_size=current_config["batch_size"] * 10)
 
         # sys.exit()
 
@@ -179,7 +180,6 @@ if __name__ == "__main__":
         hit_ratio = deep_recommender.evaluate_epoch(
             eval_data_loader_v2,
             epoch_num=epoch
-            # evaluation_data, epoch_num=epoch
         )
         deep_recommender.persist_model(current_config["alias"], epoch,
                                        hit_ratio)
