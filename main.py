@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import sys
 
 # os.environ["MODIN_ENGINE"] = "ray"
 # import modin.pandas as pd
@@ -36,7 +37,7 @@ def load_zpls_data(data_dir, MIN_RATINGS=4):
         "product_id": "mid",
         "date": "timestamp"
     },
-                    inplace=True)
+        inplace=True)
     df = sales_df
 
     # first let us filter out the users with less than MIN_RATINGS interations
@@ -105,7 +106,7 @@ if __name__ == "__main__":
     gmf_config = c_list["gmf"]
     mlp_config = c_list["mlp"]
     neu_mf_conifg = c_list["neumf"]
-    current_config = gmf_config  #neu_mf_conifg  # mlp_config  # neu_mf_conifg
+    current_config = gmf_config  # neu_mf_conifg  # mlp_config  # neu_mf_conifg
     logger.debug("curretn config is {}".format(current_config))
 
     ml1m_dir = "/data/ml-1m/ratings.dat"
@@ -160,17 +161,23 @@ if __name__ == "__main__":
         logger.info("Epoch {}".format(epoch))
         # train_data = sample_generator._prepare_epoch(
         #     current_config["num_negatives"], current_config["batch_size"])
+
+        eval_data_loader_v2 = sample_generator.evaluation_data_loader_v2(
+            batch_size=current_config["batch_size"] * 10)
+
+        # sys.exit()
+
         train_data = sample_generator._prepare_epoch_low_mem(
             current_config["num_negatives"], current_config["batch_size"])
         deep_recommender.train_epoch(train_data, epoch_num=epoch)
-        ### i want to use the batchced eval data loader to prevetn out of mem
+        # i want to use the batchced eval data loader to prevetn out of mem
         # hit_ratio = deep_recommender.evaluate_epoch(evaluation_data, epoch_num=epoch)
 
-        evaluation_data_loader = sample_generator.evaluation_data_data_loader(
-            batch_size=current_config["batch_size"] * 10)
+        # evaluation_data_loader = sample_generator.evaluation_data_data_loader(
+        #     batch_size=current_config["batch_size"] * 10)
 
         hit_ratio = deep_recommender.evaluate_epoch(
-            evaluation_data_loader,
+            eval_data_loader_v2,
             epoch_num=epoch
             # evaluation_data, epoch_num=epoch
         )

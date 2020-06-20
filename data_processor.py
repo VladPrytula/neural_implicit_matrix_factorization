@@ -3,7 +3,7 @@ from copy import deepcopy
 import random
 import pandas as pd
 from tqdm import tqdm
-
+import sys
 # import os
 # os.environ["MODIN_ENGINE"] = "ray"
 # import modin.pandas as pd
@@ -30,6 +30,7 @@ class EvaluationDataset(Dataset):
         self.negative_items = negative_items
 
     def __getitem__(self, index):
+        # TODO: This is plain wrong since the dimentions are different
         return (self.positive_interactions_users[index],
                 self.test_items[index],
                 self.negative_interactions_users[index],
@@ -37,6 +38,35 @@ class EvaluationDataset(Dataset):
 
     def __len__(self):
         return self.positive_interactions_users.size(0)
+
+
+class EvaluationDatasetV2(Dataset):
+    def __init__(self, test_ratings: pd.DataFrame):
+        # TODO. do i have to make a copy here?
+        self._test_ratings = test_ratings.copy()
+        logger.debug('we are in the EvalDataSetV2 %s',
+                     self._test_ratings.head())
+        logger.debug('what is the shape of the self._test_ratings %s',
+                     self._test_ratings.shape)
+        logger.debug('do we have an index %s', self._test_ratings.index)
+        self._positive_interactions_users = []
+        self._test_items = []
+        self._negative_interactions_users = []
+        self._negative_items = []
+        logger.debug("positive interactions users should be an empty array".format(
+            self._positive_interactions_users))
+
+        # persist dataframe
+        self._test_ratings.to_pickle("misc/_test_ratings.pkl")
+
+    def __getitem__(self, index):
+        row = self._test_ratings.iloc[index]
+        return (torch.LongTensor([row.userId]),
+                torch.LongTensor([row.itemId]),
+                torch.LongTensor(row.negative_samples))
+
+    def __len__(self):
+        return self._test_ratings.shape[0]
 
 
 class UserItemRatingDataset(Dataset):
@@ -223,6 +253,26 @@ class SampleGenerator:
         )
         return DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
+    def evaluation_data_loader_v2(self, batch_size):
+        logger.info("preparing evaluation data")
+        # TODO: this shoudl be unified in names:
+        logger.info(
+            "preparing evaluation data via dataloader, perhaps it shoudl be written to disk once and for all"
+        )
+        test_ratings = pd.merge(self.test_ratings,
+                                self.negatives[["userId", "negative_samples"]],
+                                on="userId")
+        logger.info(test_ratings.head())
+        positive_interactions_users, test_items, negative_interactions_users, negative_items = [], [], [], []
+        logger.info("check if i have correct positive inter users {}".format(
+            positive_interactions_users))
+
+        evaluation_dataset = EvaluationDatasetV2(test_ratings)
+
+        return DataLoader(evaluation_dataset,
+                          batch_size=len(evaluation_dataset),
+                          shuffle=False)
+
     def evaluation_data_data_loader(self, batch_size):
         logger.info("preparing evaluation data")
         # TODO: this shoudl be unified in names:
@@ -232,16 +282,17 @@ class SampleGenerator:
         test_ratings = pd.merge(self.test_ratings,
                                 self.negatives[["userId", "negative_samples"]],
                                 on="userId")
+        logger.info(test_ratings.head())
         positive_interactions_users, test_items, negative_interactions_users, negative_items = [], [], [], []
         logger.info("check if i have correct positive inter users {}".format(
             positive_interactions_users))
         ####
-        #### In reality i am not sure that this should be done here
-        #### we can
-        #### 1. extract creation of the test_ratings to the top (if it is not epoch dependent , must check here)
-        #### theretically negative samples should be epoch dep in order not to overfit to those
-        #### 2. when we do have a join we can save it as a tensor and pass out in batches
-        #### 3. further processing can be done on that
+        # In reality i am not sure that this should be done here
+        # we can
+        # 1. extract creation of the test_ratings to the top (if it is not epoch dependent , must check here)
+        # theretically negative samples should be epoch dep in order not to overfit to those
+        # 2. when we do have a join we can save it as a tensor and pass out in batches
+        # 3. further processing can be done on that
 
         # this logic for creation of tensors should be moved to `evaluate_epoch()` function
         for row in test_ratings.itertuples():
@@ -261,9 +312,19 @@ class SampleGenerator:
         logger.info("negative items shape {}".format(len(negative_items)))
 
         ############################
-        ####### TODO: there is a bug here, since i am not correctly supplying data of different lneght to the DataLoader as
-        ####### evaluation dataset
+        # TODO: there is a bug here, since i am not correctly supplying data of different lneght to the DataLoader as
+        # evaluation dataset
         ############################
+
+        # here i will save those for debugging purposes
+        #torch.save(tensor, 'file.pt') and torch.load('file.pt')
+        torch.save(torch.LongTensor(positive_interactions_users),
+                   'misc/positive_interactions_users.pt')
+        torch.save(torch.LongTensor(test_items), 'misc/test_items.pt')
+        torch.save(torch.LongTensor(negative_interactions_users),
+                   'misc/negative_interactions_users.pt')
+        torch.save(torch.LongTensor(negative_items), 'misc/negative_items.pt')
+        sys.exit()
 
         evaluation_dataset = EvaluationDataset(
             positive_interactions_users=torch.LongTensor(

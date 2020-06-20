@@ -34,7 +34,8 @@ class BaseDeepRecommender:
         # TODO: I'm not sure where i have to close the
 
     def train_batch(self, users, items, ratings):
-        assert hasattr(self, "model"), "We need some model to train, please load/define"
+        assert hasattr(
+            self, "model"), "We need some model to train, please load/define"
         if self._config["use_cuda"] and torch.cuda.is_available():
             logger.debug("moving users, items, ratings to cuda")
             users, items, ratings = (
@@ -54,7 +55,8 @@ class BaseDeepRecommender:
 
     def train_epoch(self, data_loader, epoch_num):
         logger.info("starting training Epoch {}".format(epoch_num))
-        assert hasattr(self, "model"), "We need some model to train, please load/define"
+        assert hasattr(
+            self, "model"), "We need some model to train, please load/define"
         logger.info("self.model.num_users is {}".format(self.model.num_users))
         self.model.train()
         epoch_loss = 0.0
@@ -63,7 +65,8 @@ class BaseDeepRecommender:
             # assert isinstance(batch_data[0], torch.LongTensor)
             # assert isinstance(batch_data[1], torch.LongTensor)
             # assert isinstance(batch_data[2], torch.FloatTensor)
-            batch_loss = self.train_batch(batch_data[0], batch_data[1], batch_data[2])
+            batch_loss = self.train_batch(
+                batch_data[0], batch_data[1], batch_data[2])
             if batch_idx % 500 == 0:
                 logger.info(
                     "Epoch {} has batch {} loss {}".format(
@@ -76,7 +79,8 @@ class BaseDeepRecommender:
         del batch_data
 
     def evaluate_epoch(self, eval_data, epoch_num):
-        assert hasattr(self, "model"), "We need some model to train, please load/define"
+        assert hasattr(
+            self, "model"), "We need some model to train, please load/define"
 
         self.model.eval()
         # let us also disable autograd engine to speed things up and reduce memory footprint
@@ -84,49 +88,68 @@ class BaseDeepRecommender:
         with torch.no_grad():
             for batch_idx, batch_data in enumerate(eval_data):
                 # TODO: this is ridiculous piece of shit
-                test_users, test_items, negative_interactions_users, negative_items = (
+                test_users, test_items, negative_samples = (
                     batch_data[0],
                     batch_data[1],
-                    batch_data[2],
-                    batch_data[3],
+                    batch_data[2]
                 )
+
+                # Here we have to transform the data to a format suitable for training:
+                # I need to transfer it into two sequence of tuples:
+                # postive interactions {(user_id, item_id)} and compute a score
+                # negative interactions {(user_id, negatiev_item_id)} and compute a score
+                positive_interactions_users, positive_interactions_items, negative_interactions_users, negative_interactions_items = [], [], [], []
+                for idx, user in enumerate(test_users):
+                    print(idx)
+                    positive_interactions_users.append(user)
+                    positive_interactions_items.append(test_items[idx])
+                    for i in range(len(negative_samples[idx])):
+                        negative_interactions_users.append(user)
+                        negative_interactions_items.append(
+                            negative_samples[idx][i])
+
                 # TODO: I have to do normal batch loader.
                 if self._config["use_cuda"]:
-                    test_users = test_users.cuda(non_blocking=True)
-                    test_items = test_items.cuda(non_blocking=True)
+                    positive_interactions_users = positive_interactions_users.cuda(
+                        non_blocking=True)
+                    positive_interactions_items = positive_interactions_items.cuda(
+                        non_blocking=True)
                     negative_interactions_users = negative_interactions_users.cuda(
                         non_blocking=True
                     )
-                    negative_items = negative_items.cuda(non_blocking=True)
+                    negative_interactions_items = negative_interactions_items.cuda(
+                        non_blocking=True)
                     self.model.cuda()
                 elif not self._config["use_cuda"]:
-                    test_users = test_users.cpu()
-                    test_items = test_items.cpu()
-                    negative_users = negative_users.cpu()
-                    negative_items = negative_items.cpu()
+                    positive_interactions_users = positive_interactions_users.cpu()
+                    positive_interactions_items = positive_interactions_items.cpu()
+                    negative_interactions_users = negative_interactions_users.cpu()
+                    negative_interactions_items = negative_interactions_items.cpu()
                     self.model.cpu()
-                test_interactions_scores = self.model(test_users, test_items)
+                test_interactions_scores = self.model(
+                    positive_interactions_users, positive_interactions_items)
                 negative_interactions_scores = self.model(
-                    negative_interactions_users, negative_items
+                    negative_interactions_users, negative_interactions_items
                 )
                 # TODO: TODO, TODO : this is TERIBLY SLOW ALSO
                 self._evaluator.set_interactions(
-                    test_users.view(-1).tolist(),
-                    test_items.view(-1).tolist(),
+                    positive_interactions_users.view(-1).tolist(),
+                    positive_interactions_items.view(-1).tolist(),
                     test_interactions_scores.view(-1).tolist(),
                     negative_interactions_users.view(-1).tolist(),
-                    negative_items.view(-1).tolist(),
+                    negative_interactions_items.view(-1).tolist(),
                     negative_interactions_scores.view(-1).tolist(),
                 )
                 hit_ratio = self._evaluator.cal_hit_ratio()
                 logger.info("eval batch value HR is {}".format(hit_ratio))
                 epoch_hit_ratio.append(hit_ratio)
                 logger.info(epoch_hit_ratio)
-            hit_ratio_avg =np.array(epoch_hit_ratio).mean()
+            hit_ratio_avg = np.array(epoch_hit_ratio).mean()
             logger.info(hit_ratio_avg)
         self._writer.add_scalar("performance/HR", hit_ratio_avg, epoch_num)
         self._writer.flush()
-        logger.info("[Evluating Epoch {}] HR = {:.4f}".format(epoch_num, hit_ratio_avg))
+        logger.info("[Evluating Epoch {}] HR = {:.4f}".format(
+            epoch_num, hit_ratio_avg))
 
         return hit_ratio
 
@@ -179,8 +202,10 @@ class BaseDeepRecommender:
     #     return hit_ratio
 
     def persist_model(self, alias, epoch_num, hit_ratio):
-        assert hasattr(self, "model"), "I can not save model when there is no model!"
-        model_dir = self._config["model_dir"].format(alias, epoch_num, hit_ratio)
+        assert hasattr(
+            self, "model"), "I can not save model when there is no model!"
+        model_dir = self._config["model_dir"].format(
+            alias, epoch_num, hit_ratio)
         torch.save(self.model, model_dir)
 
     @staticmethod
