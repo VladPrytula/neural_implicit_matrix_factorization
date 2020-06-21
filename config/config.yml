@@ -6,18 +6,20 @@ gmf:
     adam_lr: 1e-3
     latent_dim: 8
     num_negatives: 10
+    top_k_eval: 4
     l2_regularization: 0.0 # 0.1
     use_cuda: True
     model_dir: "checkpoints/{}_Epoch{}_HR{:.4f}.model"
 
 mlp:
     alias: mlp_imf
-    num_epochs: 10
+    num_epochs: 20
     batch_size: 512
     optimizer: adam
     adam_lr: 1e-3
-    latent_dim: 8
+    latent_dim: 8 ### what about this?
     num_negatives: 10
+    top_k_eval: 4    
     layers: [16, 64, 32, 16, 8]
     l2_regularization: 0.0000001 # 0.1
     use_cuda: True
@@ -34,7 +36,8 @@ neumf:
     adam_lr: 1e-3
     latent_dim_mf: 8
     latent_dim_mlp: 8
-    num_negatives: 10
+    num_negatives: 100
+    top_k_eval: 4    
     layers: [16, 64, 32, 16, 8]
     l2_regularization: 0.000001 # 0.1
     use_cuda: True

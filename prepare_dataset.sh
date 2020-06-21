@@ -73,18 +73,18 @@ if [ ! -f ${RATINGS_PATH} ]; then
     unzip -u ${ZIP_PATH}  -d ${RAW_DATADIR}
 fi
 
-if [ ! -f ${CACHED_DATADIR}/train_ratings.pt ]; then
-    echo "preprocessing ${RATINGS_PATH} and save to disk"
-    t0=$(date +%s)
-    python convert.py --path ${RATINGS_PATH} --output ${CACHED_DATADIR}
-    t1=$(date +%s)
-    delta=$(( $t1 - $t0 ))
-    echo "Finish preprocessing in $delta seconds"
-else
-    echo 'Using cached preprocessed data'
-fi
+# if [ ! -f ${CACHED_DATADIR}/train_ratings.pt ]; then
+#     echo "preprocessing ${RATINGS_PATH} and save to disk"
+#     t0=$(date +%s)
+#     python convert.py --path ${RATINGS_PATH} --output ${CACHED_DATADIR}
+#     t1=$(date +%s)
+#     delta=$(( $t1 - $t0 ))
+#     echo "Finish preprocessing in $delta seconds"
+# else
+#     echo 'Using cached preprocessed data'
+# fi
 
-echo "Dataset $DATASET_NAME successfully prepared at: $CACHED_DATADIR\n"
-echo "You can now run the training with: python -m torch.distributed.launch --nproc_per_node=<number_of_GPUs> --use_env ncf.py --data ${CACHED_DATADIR}"
+# echo "Dataset $DATASET_NAME successfully prepared at: $CACHED_DATADIR\n"
+# echo "You can now run the training with: python -m torch.distributed.launch --nproc_per_node=<number_of_GPUs> --use_env ncf.py --data ${CACHED_DATADIR}"
 
 
