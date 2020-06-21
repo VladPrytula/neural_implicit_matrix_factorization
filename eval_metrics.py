@@ -37,9 +37,8 @@ class RecoMetrics():
                 'scores': negative_scores + test_scores
             }
         )
-        print(eval_df)
 
-        logger.info("pd eval shpae {}".format(eval_df.shape))
+        logger.debug("pd eval shpae {}".format(eval_df.shape))
         # we need this dumb join in order to be able to lately compute top hits
         eval_df = pd.merge(eval_df, positive_interactions_df,
                            on=['users'], how='left')

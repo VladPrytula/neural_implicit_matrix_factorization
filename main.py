@@ -107,7 +107,7 @@ if __name__ == "__main__":
     mlp_config = c_list["mlp"]
     neu_mf_conifg = c_list["neumf"]
     # gmf_config  # neu_mf_conifg  # mlp_config  # neu_mf_conifg
-    current_config = mlp_config
+    current_config = neu_mf_conifg
     logger.debug("curretn config is {}".format(current_config))
 
     ml1m_dir = "/data/ml-1m/ratings.dat"
@@ -136,15 +136,13 @@ if __name__ == "__main__":
     #     hit_ratio = deep_recommender.evaluate_epoch(evaluation_data, epoch_num=epoch)
     #     deep_recommender.persist_model(mlp_config['alias'], epoch, hit_ratio)
 
-    # deep_recommender = NeuIMFDeepRecommender(
-    #     config=current_config, num_users=num_users, num_items=num_items
-    # )
-
-    deep_recommender = MLPDeepRecommender(
+    deep_recommender = NeuIMFDeepRecommender(
         config=current_config, num_users=num_users, num_items=num_items)
-    # deep_recommender = GIMFDeepRecommender(config=current_config,
-    #                                        num_users=num_users,
-    #                                        num_items=num_items)
+    # deep_recommender = MLPDeepRecommender(
+    #     config=current_config, num_users=num_users, num_items=num_items)
+    # deep_recommender = GIMFDeepRecommender(
+    #     config=current_config, num_users=num_users, num_items=num_items)
+
     dummy_users = torch.tensor([1, 2, 3]).cuda()
     dummy_items = torch.tensor([1, 2, 3]).cuda()
     deep_recommender._writer.add_graph(deep_recommender.model,

@@ -11,14 +11,14 @@ import numpy as np
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 
 class BaseDeepRecommender:
     def __init__(self, config: DefaultDict):
         logger.info("Base Deep Recommender got the config {}".format(config))
         self._config = config
-        self._evaluator = RecoMetrics()
+        self._evaluator = RecoMetrics(top_k=self._config["top_k_eval"])
         # self.model = None
         self._writer = SummaryWriter(
             log_dir="runs/{}".format(

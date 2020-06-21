@@ -238,6 +238,10 @@ class SampleGenerator:
                 "negative_items"].apply(
                     lambda x: random.sample(x, num_negatives))
         logger.info("Epoch data is being prepared via pandas. Have a coffee")
+        # TODO: This is the slowest part of the whole pipeline,
+        # and it is _not_ the training.
+        # This MUSt be somehow extracted to the Dataset() part, but
+        # HOW do I handle the random sampling of negatives in every epoch?
         for row in train_epoch_with_negatives.itertuples():
             users.append(int(row.userId))
             items.append(int(row.itemId))
@@ -251,7 +255,7 @@ class SampleGenerator:
             item_tensor=torch.LongTensor(items),
             target_tensor=torch.FloatTensor(ratings),
         )
-        return DataLoader(dataset, batch_size=batch_size, shuffle=True)
+        return DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=4)
 
     def evaluation_data_loader_v2(self, batch_size):
         logger.info("preparing evaluation data")
